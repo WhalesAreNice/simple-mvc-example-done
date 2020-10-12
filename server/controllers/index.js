@@ -3,6 +3,7 @@ const models = require('../models');
 
 // get the Cat model
 const Cat = models.Cat.CatModel;
+const Dog = models.Dog.DogModel;
 
 // default fake data so that we have something to work with until we make a real Cat
 const defaultData = {
@@ -12,6 +13,7 @@ const defaultData = {
 
 // object for us to keep track of the last Cat we made and dynamically update it sometimes
 let lastAdded = new Cat(defaultData);
+let lastAddedDog = new Dog(defaultData);
 
 // function to handle requests to the main page
 // controller functions in Express receive the full HTTP request
@@ -45,6 +47,9 @@ const readAllCats = (req, res, callback) => {
   Cat.find(callback).lean();
 };
 
+const readAllDogs = (req, res, callback) => {
+  Dog.find(callback).lean();
+};
 
 // function to find a specific cat on request.
 // Express functions always receive the request and the response.
@@ -105,12 +110,12 @@ const hostPage2 = (req, res) => {
 // controller functions in Express receive the full HTTP request
 // and a pre-filled out response object to send
 const hostPage3 = (req, res) => {
-    // res.render takes a name of a page to render.
-    // These must be in the folder you specified as views in your main app.js file
-    // Additionally, you don't need .jade because you registered the file type
-    // in the app.js as jade. Calling res.render('index')
-    // actually calls index.jade. A second parameter of JSON can be passed
-    // into the jade to be used as variables with #{varName}
+  // res.render takes a name of a page to render.
+  // These must be in the folder you specified as views in your main app.js file
+  // Additionally, you don't need .jade because you registered the file type
+  // in the app.js as jade. Calling res.render('index')
+  // actually calls index.jade. A second parameter of JSON can be passed
+  // into the jade to be used as variables with #{varName}
   res.render('page3');
 };
 
@@ -167,7 +172,6 @@ const setName = (req, res) => {
 
   return res;
 };
-
 
 // function to handle requests search for a name and return the object
 // controller functions in Express receive the full HTTP request
@@ -249,16 +253,87 @@ const notFound = (req, res) => {
   });
 };
 
+const createDog = (req, res) => {
+  if (!req.body.firstname || !req.body.lastname || !req.body.breed || !req.body.age) {
+    return res.status(400).json({ error: 'firstname, lastname, breed, and age are all required' });
+  }
+    console.dir(req);
+  const dogName = `${req.body.firstname} ${req.body.lastname}`;
+  const dogBreed = `${req.body.breed}`;
+        
+  const dogData = {
+    name: dogName,
+    breed: dogBreed,
+    age: req.body.age,
+  };
+debugger;
+  const newDog = new Dog(dogData);
+
+  const savePromise = newDog.save();
+
+  savePromise.then(() => {
+    lastAddedDog = newDog;
+    res.json({
+      name: lastAddedDog.name, breed: lastAddedDog.breed, age: lastAddedDog.age,
+    });
+  });
+
+  savePromise.catch((err) => res.status(500).json({ err }));
+
+  return res;
+};
+
+const changeDogAge = (req, res) => {
+  if (!req.body.name) {
+    return res.status(400).json({ error: 'Name is required' });
+  }
+
+  return Dog.findByName(req.body.name, (err, doc) => {
+    if (err) {
+      return res.status(500).json({ err });
+    }
+
+    if (!doc) {
+      return res.json({ error: 'No dog found' });
+    }
+
+    const dogAge = doc.age + 1;
+
+    const savePromise = lastAdded.save();
+
+    savePromise.then(() => res.json({ name: doc.name, breed: doc.breed, age: dogAge }));
+
+    savePromise.catch((error) => res.status(500).json({ error }));
+
+    return res.json({ name: doc.name, breed: doc.breed, age: dogAge });
+  });
+};
+
+const hostPage4 = (req, res) => {
+  const callback = (err, docs) => {
+    if (err) {
+      return res.status(500).json({ err });
+    }
+
+    return res.render('page4', { dogs: docs });
+  };
+
+  readAllDogs(req, res, callback);
+};
+
 // export the relevant public controller functions
 module.exports = {
   index: hostIndex,
   page1: hostPage1,
   page2: hostPage2,
   page3: hostPage3,
+  page4: hostPage4,
   readCat,
   getName,
   setName,
   updateLast,
   searchName,
   notFound,
+  createDog,
+  changeDogAge,
 };
