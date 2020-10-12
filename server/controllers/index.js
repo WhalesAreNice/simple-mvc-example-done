@@ -257,7 +257,7 @@ const createDog = (req, res) => {
   if (!req.body.firstname || !req.body.lastname || !req.body.breed || !req.body.age) {
     return res.status(400).json({ error: 'firstname, lastname, breed, and age are all required' });
   }
-  console.dir(req);
+
   const dogName = `${req.body.firstname} ${req.body.lastname}`;
   const dogBreed = `${req.body.breed}`;
 
@@ -298,12 +298,16 @@ const changeDogAge = (req, res) => {
     }
 
     lastAddedDog = Dog(doc);
-      
-      lastAddedDog.age++;
+
+    lastAddedDog.age++;
 
     const savePromise = lastAddedDog.save();
 
-    savePromise.then(() => res.json({ name: lastAddedDog.name, breed: lastAddedDog.breed, age: lastAddedDog.age }));
+    savePromise.then(() => res.json({
+      name: lastAddedDog.name,
+      breed: lastAddedDog.breed,
+      age: lastAddedDog.age,
+    }));
 
     savePromise.catch((error) => res.status(500).json({ error }));
 
