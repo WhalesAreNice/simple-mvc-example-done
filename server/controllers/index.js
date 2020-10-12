@@ -257,16 +257,16 @@ const createDog = (req, res) => {
   if (!req.body.firstname || !req.body.lastname || !req.body.breed || !req.body.age) {
     return res.status(400).json({ error: 'firstname, lastname, breed, and age are all required' });
   }
-    console.dir(req);
+  console.dir(req);
   const dogName = `${req.body.firstname} ${req.body.lastname}`;
   const dogBreed = `${req.body.breed}`;
-        
+
   const dogData = {
     name: dogName,
     breed: dogBreed,
     age: req.body.age,
   };
-debugger;
+
   const newDog = new Dog(dogData);
 
   const savePromise = newDog.save();
@@ -285,7 +285,7 @@ debugger;
 
 const changeDogAge = (req, res) => {
   if (!req.body.name) {
-    return res.status(400).json({ error: 'Name is required' });
+    return res.status(400).json({ error: 'Name is required to perform a search' });
   }
 
   return Dog.findByName(req.body.name, (err, doc) => {
@@ -297,15 +297,17 @@ const changeDogAge = (req, res) => {
       return res.json({ error: 'No dog found' });
     }
 
-    const dogAge = doc.age + 1;
+    lastAddedDog = Dog(doc);
+      
+      lastAddedDog.age++;
 
-    const savePromise = lastAdded.save();
+    const savePromise = lastAddedDog.save();
 
-    savePromise.then(() => res.json({ name: doc.name, breed: doc.breed, age: dogAge }));
+    savePromise.then(() => res.json({ name: lastAddedDog.name, breed: lastAddedDog.breed, age: lastAddedDog.age }));
 
     savePromise.catch((error) => res.status(500).json({ error }));
 
-    return res.json({ name: doc.name, breed: doc.breed, age: dogAge });
+    return res.json({ name: doc.name, breed: doc.breed, age: lastAddedDog.age });
   });
 };
 
